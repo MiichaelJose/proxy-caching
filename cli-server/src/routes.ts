@@ -1,30 +1,24 @@
+import axios from "axios";
 import { Router, Request, Response } from "express";
+import { getOrigin } from "./server.js";
 
 const ProductsRouter = Router();
 
 const products: Array<object> = []
 
-ProductsRouter.get('/', (req: Request, res: Response) => {
-    res.send(products).status(200);
+ProductsRouter.get('/', async (req: Request, res: Response) => {
+    if (products.length) {
+        res.set("X-Cache", "HIT").status(200).send(products);
+    } else {
+        const response = await axios.get(getOrigin());
+        products.push(response.data)
+        res.set("X-Cache", "MISS").status(200).send(response.data);
+    }
 });
 
-ProductsRouter.post('/', (req: Request, res: Response) => {
-    products.push(req.body)
-    res.send(`Produto cadastrado!`).status(201);
-});
-
-ProductsRouter.get('/memory', (req: Request, res: Response) => {
-  const memory = process.memoryUsage();
-  // Converte bytes para MB para ficar legível
-  const memoryMB = {
-    rss: (memory.rss / 1024 / 1024).toFixed(2),
-    heapTotal: (memory.heapTotal / 1024 / 1024).toFixed(2),
-    heapUsed: (memory.heapUsed / 1024 / 1024).toFixed(2),
-    external: (memory.external / 1024 / 1024).toFixed(2)
-  };
-  
-  res.json([memoryMB, ]);
-});
-
+// ProductsRouter.post('/', (req: Request, res: Response) => {
+//     products.push(req.body)
+//     res.send(`Produto cadastrado!`).status(201);
+// });
 
 export default ProductsRouter;
